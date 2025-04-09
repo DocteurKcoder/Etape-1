@@ -1,0 +1,68 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Recherche Reactome</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    input, button { padding: 8px; margin-top: 10px; }
+    #result { margin-top: 20px; font-weight: bold; }
+    #spinner { display: none; margin-top: 10px; color: #007bff; }
+    ul { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Recherche de Pathways sur Reactome</h2>
+  <label for="uniprot">Code UniProt ou nom de biomarqueur :</label><br>
+  <input type="text" id="uniprot" placeholder="Ex: P01308 ou INS"><br>
+  <button onclick="searchReactome()">Chercher</button>
+
+  <div id="spinner">🔄 Chargement...</div>
+  <div id="result"></div>
+
+  <script>
+    async function searchReactome() {
+      const input = document.getElementById("uniprot").value.trim();
+      const resultDiv = document.getElementById("result");
+      const spinner = document.getElementById("spinner");
+
+      resultDiv.innerHTML = "";
+      if (!input) {
+        resultDiv.textContent = "Veuillez entrer un code UniProt.";
+        return;
+      }
+
+      spinner.style.display = "block";
+
+      try {
+        const url = `https://reactome.org/ContentService/data/pathways/low/entity/${input}`;
+        const response = await fetch(url);
+
+        spinner.style.display = "none";
+
+        if (!response.ok) {
+          resultDiv.textContent = "Aucun résultat ou erreur avec l'API.";
+          return;
+        }
+
+        const data = await response.json();
+        if (data.length === 0) {
+          resultDiv.textContent = `Aucun pathway trouvé pour ${input}.`;
+          return;
+        }
+
+        let html = `<p>Le biomarqueur <strong>${input}</strong> est impliqué dans ${data.length} pathway(s) :</p><ul>`;
+        data.forEach(pathway => {
+          html += `<li><a href="https://reactome.org/PathwayBrowser/#/${pathway.stableId}" target="_blank">${pathway.displayName}</a></li>`;
+        });
+        html += `</ul>`;
+        resultDiv.innerHTML = html;
+
+      } catch (error) {
+        spinner.style.display = "none";
+        resultDiv.textContent = "Erreur lors de la requête : " + error;
+      }
+    }
+  </script>
+</body>
+</html>
